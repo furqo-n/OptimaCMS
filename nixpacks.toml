@@ -1,8 +1,14 @@
 [phases.setup]
 nixPkgs = ["php82", "php82Packages.composer", "nodejs"]
 
+[phases.install]
+cmds = [
+    "composer install --no-dev --optimize-autoloader --ignore-platform-reqs",
+    "npm install"
+]
+
 [phases.build]
-cmds = ["composer install --no-dev --optimize-autoloader --ignore-platform-reqs", "npm install && npm run prod"]
+cmds = ["npm run prod"]
 
 [start]
 cmd = "vendor/bin/heroku-php-apache2 public/"
