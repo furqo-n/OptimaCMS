@@ -13,4 +13,4 @@ cmds = [
 cmds = ["npm run prod"]
 
 [start]
-cmd = "php artisan serve --host=0.0.0.0 --port=$PORT"
+cmd = "php artisan storage:link && php artisan serve --host=0.0.0.0 --port=$PORT"
