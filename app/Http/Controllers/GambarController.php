@@ -49,9 +49,12 @@ class GambarController extends Controller
                 // The index view has 'options' which includes edit button.
                 $edit = route('gambar.edit', $post->id);
 
+                // Check if image is a full URL (Cloudinary) or local path
+                $imageUrl = filter_var($post->gambar, FILTER_VALIDATE_URL) ? $post->gambar : asset('storage/gambar/' . $post->gambar);
+
                 $nestedData['id'] = $post->id;
                 $nestedData['kategori'] = $post->kategori;
-                $nestedData['gambar'] = '<img src="' . asset('storage/gambar/' . $post->gambar) . '" width="100px">';
+                $nestedData['gambar'] = '<img src="' . $imageUrl . '" width="100px">';
                 $nestedData['options'] = "&emsp;<a href='{$edit}' title='EDIT' class='btn btn-warning btn-sm'><i class='fas fa-edit'></i></a>
                                           &emsp;<a href='javascript:void(0)' data-id='{$post->id}' data-url='" . route('gambar.delete', $post->id) . "' title='DELETE' class='btn btn-danger btn-sm hapusData'><i class='fas fa-trash'></i></a>";
                 $data[] = $nestedData;
@@ -78,11 +81,10 @@ class GambarController extends Controller
 
             $input = $request->all();
 
-            if ($image = $request->file('gambar')) {
-                $destinationPath = 'storage/gambar/';
-                $profileImage = date('YmdHis') . "." . $image->getClientOriginalExtension();
-                $image->move($destinationPath, $profileImage);
-                $input['gambar'] = "$profileImage";
+            if ($request->hasFile('gambar')) {
+                $image = $request->file('gambar');
+                $cloudinaryImage = $image->storeOnCloudinary('gambar');
+                $input['gambar'] = $cloudinaryImage->getSecurePath();
             }
 
             Gambar::create($input);
@@ -103,19 +105,10 @@ class GambarController extends Controller
 
             $input = $request->all();
 
-            if ($image = $request->file('gambar')) {
-                // Hapus gambar lama
-                if ($gambar->gambar) {
-                    $oldPath = public_path('storage/gambar/' . $gambar->gambar);
-                    if (file_exists($oldPath)) {
-                        unlink($oldPath);
-                    }
-                }
-
-                $destinationPath = 'storage/gambar/';
-                $profileImage = date('YmdHis') . "." . $image->getClientOriginalExtension();
-                $image->move($destinationPath, $profileImage);
-                $input['gambar'] = "$profileImage";
+            if ($request->hasFile('gambar')) {
+                $image = $request->file('gambar');
+                $cloudinaryImage = $image->storeOnCloudinary('gambar');
+                $input['gambar'] = $cloudinaryImage->getSecurePath();
             } else {
                 unset($input['gambar']);
             }
@@ -129,12 +122,7 @@ class GambarController extends Controller
     public function hapusGambar($id)
     {
         $gambar = Gambar::find($id);
-        if ($gambar->gambar) {
-            $oldPath = public_path('storage/gambar/' . $gambar->gambar);
-            if (file_exists($oldPath)) {
-                unlink($oldPath);
-            }
-        }
+        // Cloudinary deletion not implemented, same as Portofolio
         $gambar->delete();
         return response()->json(['msg' => 'Data Gambar berhasil dihapus']);
     }

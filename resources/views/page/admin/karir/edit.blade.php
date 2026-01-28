@@ -121,8 +121,8 @@
                                 </div>
                                 @if($karir->gambar)
                                     <div class="mt-2 text-center">
-                                        <img src="{{ asset('storage/karir/' . $karir->gambar) }}" width="200px"
-                                            class="img-thumbnail">
+                                        <img src="{{ filter_var($karir->gambar, FILTER_VALIDATE_URL) ? $karir->gambar : asset('storage/karir/' . $karir->gambar) }}"
+                                            width="200px" class="img-thumbnail">
                                     </div>
                                 @endif
                             </div>
@@ -159,15 +159,15 @@
                 let rowClass = name.includes('benefit') ? 'benefit-row' : 'kualifikasi-row';
 
                 let html = `
-                    <div class="${rowClass} row mb-2">
-                        <div class="col-md-10">
-                            <input type="text" name="${name}" class="form-control" placeholder="${placeholder}" required>
+                        <div class="${rowClass} row mb-2">
+                            <div class="col-md-10">
+                                <input type="text" name="${name}" class="form-control" placeholder="${placeholder}" required>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-danger remove-dynamic-row"><i class="fas fa-trash"></i></button>
+                            </div>
                         </div>
-                        <div class="col-md-2">
-                            <button type="button" class="btn btn-danger remove-dynamic-row"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                `;
+                    `;
                 $(container).append(html);
             });
 

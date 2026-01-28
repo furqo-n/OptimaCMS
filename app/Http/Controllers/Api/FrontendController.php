@@ -18,15 +18,15 @@ class FrontendController extends Controller
             // Mengambil semua data yang dibutuhkan untuk landing page
             $data = [
                 'portofolios' => Portofolio::latest()->get()->map(function ($item) {
-                    $item->image_url = asset('storage/portofolio/' . $item->image);
+                    $item->image_url = filter_var($item->image, FILTER_VALIDATE_URL) ? $item->image : asset('storage/portofolio/' . $item->image);
                     return $item;
                 }),
                 'kliens' => Klien::all()->map(function ($item) {
-                    $item->logo_url = asset('storage/klien/' . $item->logo);
+                    $item->logo_url = filter_var($item->logo, FILTER_VALIDATE_URL) ? $item->logo : asset('storage/klien/' . $item->logo);
                     return $item;
                 }),
                 'teknologis' => Teknologi::all()->map(function ($item) {
-                    $item->logo_url = asset('storage/teknologi/' . $item->logo);
+                    $item->logo_url = filter_var($item->logo, FILTER_VALIDATE_URL) ? $item->logo : asset('storage/teknologi/' . $item->logo);
                     return $item;
                 }),
             ];
@@ -48,7 +48,7 @@ class FrontendController extends Controller
     {
         try {
             $karir = Karir::latest()->get()->map(function ($item) {
-                $item->gambar_url = asset('storage/karir/' . $item->gambar);
+                $item->gambar_url = filter_var($item->gambar, FILTER_VALIDATE_URL) ? $item->gambar : asset('storage/karir/' . $item->gambar);
                 return $item;
             });
 
@@ -87,7 +87,7 @@ class FrontendController extends Controller
     {
         try {
             $data = Portofolio::latest()->get()->map(function ($item) {
-                $item->image_url = asset('storage/portofolio/' . $item->image);
+                $item->image_url = filter_var($item->image, FILTER_VALIDATE_URL) ? $item->image : asset('storage/portofolio/' . $item->image);
                 return $item;
             });
 
@@ -107,7 +107,7 @@ class FrontendController extends Controller
     {
         try {
             $data = Klien::all()->map(function ($item) {
-                $item->logo_url = asset('storage/klien/' . $item->logo);
+                $item->logo_url = filter_var($item->logo, FILTER_VALIDATE_URL) ? $item->logo : asset('storage/klien/' . $item->logo);
                 return $item;
             });
 
@@ -127,7 +127,7 @@ class FrontendController extends Controller
     {
         try {
             $data = Teknologi::all()->map(function ($item) {
-                $item->logo_url = asset('storage/teknologi/' . $item->logo);
+                $item->logo_url = filter_var($item->logo, FILTER_VALIDATE_URL) ? $item->logo : asset('storage/teknologi/' . $item->logo);
                 return $item;
             });
 

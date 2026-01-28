@@ -43,8 +43,11 @@ class KarirController extends Controller
             foreach ($posts as $post) {
                 $edit = route('karir.edit', $post->id);
 
+                // Check if image is a full URL (Cloudinary) or local path
+                $imageUrl = filter_var($post->gambar, FILTER_VALIDATE_URL) ? $post->gambar : asset('storage/karir/' . $post->gambar);
+
                 $nestedData['nama'] = $post->nama;
-                $nestedData['gambar'] = '<img src="' . asset('storage/karir/' . $post->gambar) . '" width="100px">';
+                $nestedData['gambar'] = '<img src="' . $imageUrl . '" width="100px">';
                 $nestedData['options'] = "&emsp;<a href='{$edit}' title='EDIT' class='btn btn-warning btn-sm'><i class='fas fa-edit'></i></a>
                                           &emsp;<a href='javascript:void(0)' data-id='{$post->id}' data-url='" . route('karir.delete', $post->id) . "' title='DELETE' class='btn btn-danger btn-sm hapusData'><i class='fas fa-trash'></i></a>";
                 $data[] = $nestedData;
@@ -75,11 +78,10 @@ class KarirController extends Controller
 
             $input = $request->all();
 
-            if ($image = $request->file('gambar')) {
-                $destinationPath = 'storage/karir/';
-                $profileImage = date('YmdHis') . "." . $image->getClientOriginalExtension();
-                $image->move($destinationPath, $profileImage);
-                $input['gambar'] = "$profileImage";
+            if ($request->hasFile('gambar')) {
+                $image = $request->file('gambar');
+                $cloudinaryImage = $image->storeOnCloudinary('karir');
+                $input['gambar'] = $cloudinaryImage->getSecurePath();
             }
 
             Karir::create($input);
@@ -104,19 +106,10 @@ class KarirController extends Controller
 
             $input = $request->all();
 
-            if ($image = $request->file('gambar')) {
-                // Hapus gambar lama
-                if ($karir->gambar) {
-                    $oldPath = public_path('storage/karir/' . $karir->gambar);
-                    if (file_exists($oldPath)) {
-                        unlink($oldPath);
-                    }
-                }
-
-                $destinationPath = 'storage/karir/';
-                $profileImage = date('YmdHis') . "." . $image->getClientOriginalExtension();
-                $image->move($destinationPath, $profileImage);
-                $input['gambar'] = "$profileImage";
+            if ($request->hasFile('gambar')) {
+                $image = $request->file('gambar');
+                $cloudinaryImage = $image->storeOnCloudinary('karir');
+                $input['gambar'] = $cloudinaryImage->getSecurePath();
             } else {
                 unset($input['gambar']);
             }
@@ -130,12 +123,7 @@ class KarirController extends Controller
     public function hapusKarir($id)
     {
         $karir = Karir::find($id);
-        if ($karir->gambar) {
-            $oldPath = public_path('storage/karir/' . $karir->gambar);
-            if (file_exists($oldPath)) {
-                unlink($oldPath);
-            }
-        }
+        // Cloudinary deletion not implemented, same as Portofolio
         $karir->delete();
         return response()->json(['msg' => 'Data Karir berhasil dihapus']);
     }

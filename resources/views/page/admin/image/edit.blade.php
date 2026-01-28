@@ -66,8 +66,8 @@
                                 <label for="gambar">Gambar</label>
                                 <br>
                                 @if($gambar->gambar)
-                                    <img src="{{ asset('storage/gambar/' . $gambar->gambar) }}" alt="Preview"
-                                        style="max-width: 200px; margin-bottom: 10px;">
+                                    <img src="{{ filter_var($gambar->gambar, FILTER_VALIDATE_URL) ? $gambar->gambar : asset('storage/gambar/' . $gambar->gambar) }}"
+                                        alt="Preview" style="max-width: 200px; margin-bottom: 10px;">
                                 @endif
                                 <div class="custom-file">
                                     <input type="file" class="custom-file-input @error('gambar') is-invalid @enderror"

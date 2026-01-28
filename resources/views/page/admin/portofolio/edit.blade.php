@@ -146,7 +146,7 @@
                                 </div>
                                 @if($portofolio->image)
                                     <div class="mt-2">
-                                        <img src="{{ asset('storage/portofolio/' . $portofolio->image) }}" width="150px">
+                                        <img src="{{ filter_var($portofolio->image, FILTER_VALIDATE_URL) ? $portofolio->image : asset('storage/portofolio/' . $portofolio->image) }}" width="150px">
                                     </div>
                                 @endif
                             </div>
