@@ -14,54 +14,66 @@ class KontakController extends Controller
 
     public function dataTable(Request $request)
     {
-        $totalData = Kontak::count();
-        $totalFiltered = $totalData;
+        try {
+            $totalData = Kontak::count();
+            $totalFiltered = $totalData;
 
-        $limit = $request->input('length');
-        $start = $request->input('start');
+            $limit = (int) $request->input('length');
+            $start = (int) $request->input('start');
+            $draw = (int) $request->input('draw');
 
-        if (empty($request->input('search.value'))) {
-            $posts = Kontak::offset($start)
-                ->limit($limit)
-                ->orderBy('created_at', 'desc')
-                ->get();
-        } else {
-            $search = $request->input('search.value');
-            $posts = Kontak::where('office', 'LIKE', "%{$search}%")
-                ->orWhere('email', 'LIKE', "%{$search}%")
-                ->offset($start)
-                ->limit($limit)
-                ->orderBy('created_at', 'desc')
-                ->get();
+            if (empty($request->input('search.value'))) {
+                $posts = Kontak::offset($start)
+                    ->limit($limit)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            } else {
+                $search = $request->input('search.value');
+                $posts = Kontak::where('office', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->offset($start)
+                    ->limit($limit)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
 
-            $totalFiltered = Kontak::where('office', 'LIKE', "%{$search}%")
-                ->orWhere('email', 'LIKE', "%{$search}%")
-                ->count();
-        }
-
-        $data = array();
-        if (!empty($posts)) {
-            foreach ($posts as $post) {
-                $edit = route('kontak.edit', $post->id);
-
-                $nestedData['office'] = $post->office;
-                $nestedData['alamat'] = $post->alamat;
-                $nestedData['no_hp'] = $post->no_hp;
-                $nestedData['email'] = $post->email;
-                $nestedData['options'] = "&emsp;<a href='{$edit}' title='EDIT' class='btn btn-warning btn-sm'><i class='fas fa-edit'></i></a>
-                                          &emsp;<a href='javascript:void(0)' data-id='{$post->id}' data-url='" . route('kontak.delete', $post->id) . "' title='DELETE' class='btn btn-danger btn-sm hapusData'><i class='fas fa-trash'></i></a>";
-                $data[] = $nestedData;
+                $totalFiltered = Kontak::where('office', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->count();
             }
+
+            $data = array();
+            if (!empty($posts)) {
+                foreach ($posts as $post) {
+                    $edit = route('kontak.edit', $post->id);
+
+                    $nestedData['office'] = $post->office;
+                    $nestedData['alamat'] = $post->alamat;
+                    $nestedData['no_hp'] = $post->no_hp;
+                    $nestedData['email'] = $post->email;
+                    $nestedData['options'] = "&emsp;<a href='{$edit}' title='EDIT' class='btn btn-warning btn-sm'><i class='fas fa-edit'></i></a>
+                                              &emsp;<a href='javascript:void(0)' data-id='{$post->id}' data-url='" . route('kontak.delete', $post->id) . "' title='DELETE' class='btn btn-danger btn-sm hapusData'><i class='fas fa-trash'></i></a>";
+                    $data[] = $nestedData;
+                }
+            }
+
+            $json_data = array(
+                "draw" => $draw,
+                "recordsTotal" => intval($totalData),
+                "recordsFiltered" => intval($totalFiltered),
+                "data" => $data
+            );
+
+            return response()->json($json_data);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Kontak DataTables Error: ' . $e->getMessage());
+            return response()->json([
+                "draw" => intval($request->input('draw')),
+                "recordsTotal" => 0,
+                "recordsFiltered" => 0,
+                "data" => [],
+                "error" => "Server Error: " . $e->getMessage()
+            ]);
         }
-
-        $json_data = array(
-            "draw" => intval($request->input('draw')),
-            "recordsTotal" => intval($totalData),
-            "recordsFiltered" => intval($totalFiltered),
-            "data" => $data
-        );
-
-        return response()->json($json_data);
     }
 
     public function tambahKontak(Request $request)
