@@ -56,7 +56,15 @@
                     "url": "{{ route('kontak.dataTable') }}",
                     "dataType": "json",
                     "type": "POST",
-                    "data": { _token: "{{csrf_token()}}" }
+                    "data": { _token: "{{csrf_token()}}" },
+                    "error": function (xhr, error, thrown) {
+                        console.error('DataTables Error:', xhr);
+                        var msg = "Status: " + xhr.status + " " + xhr.statusText;
+                        if (xhr.responseText) {
+                            msg += "\n\nResponse:\n" + xhr.responseText.substring(0, 500); // Truncate strictly
+                        }
+                        alert("DataTables Ajax Error!\n" + msg);
+                    }
                 },
                 "columns": [
                     { "data": "office" },
