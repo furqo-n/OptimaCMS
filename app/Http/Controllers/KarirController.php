@@ -79,9 +79,16 @@ class KarirController extends Controller
             $input = $request->all();
 
             if ($request->hasFile('gambar')) {
-                $image = $request->file('gambar');
-                $cloudinaryImage = $image->storeOnCloudinary('karir');
-                $input['gambar'] = $cloudinaryImage->getSecurePath();
+                try {
+                    $image = $request->file('gambar');
+                    $result = \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::upload($image->getRealPath(), [
+                        'folder' => 'karir',
+                    ]);
+                    $input['gambar'] = $result->getSecurePath();
+                } catch (\Exception $e) {
+                    \Log::error('Cloudinary Upload Failed: ' . $e->getMessage());
+                    return redirect()->back()->withErrors(['gambar' => 'Upload failed. Please check logs.']);
+                }
             }
 
             Karir::create($input);
@@ -107,9 +114,16 @@ class KarirController extends Controller
             $input = $request->all();
 
             if ($request->hasFile('gambar')) {
-                $image = $request->file('gambar');
-                $cloudinaryImage = $image->storeOnCloudinary('karir');
-                $input['gambar'] = $cloudinaryImage->getSecurePath();
+                try {
+                    $image = $request->file('gambar');
+                    $result = \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::upload($image->getRealPath(), [
+                        'folder' => 'karir',
+                    ]);
+                    $input['gambar'] = $result->getSecurePath();
+                } catch (\Exception $e) {
+                    \Log::error('Cloudinary Upload Failed (Edit): ' . $e->getMessage());
+                    return redirect()->back()->withErrors(['gambar' => 'Upload failed. Please check logs.']);
+                }
             } else {
                 unset($input['gambar']);
             }

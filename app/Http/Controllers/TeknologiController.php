@@ -45,9 +45,12 @@ class TeknologiController extends Controller
             foreach ($posts as $post) {
                 $edit = route('teknologi.edit', $post->id);
 
+                // Check if image is a full URL (Cloudinary) or local path
+                $logoUrl = filter_var($post->logo, FILTER_VALIDATE_URL) ? $post->logo : asset('storage/teknologi/' . $post->logo);
+
                 $nestedData['nama'] = $post->nama;
                 $nestedData['deskripsi'] = $post->deskripsi;
-                $nestedData['logo'] = '<img src="' . asset('storage/teknologi/' . $post->logo) . '" width="100px">';
+                $nestedData['logo'] = '<img src="' . $logoUrl . '" width="100px">';
                 $nestedData['options'] = "&emsp;<a href='{$edit}' title='EDIT' class='btn btn-warning btn-sm'><i class='fas fa-edit'></i></a>
                                           &emsp;<a href='javascript:void(0)' data-id='{$post->id}' data-url='" . route('teknologi.delete', $post->id) . "' title='DELETE' class='btn btn-danger btn-sm hapusData'><i class='fas fa-trash'></i></a>";
                 $data[] = $nestedData;
@@ -75,11 +78,17 @@ class TeknologiController extends Controller
 
             $input = $request->all();
 
-            if ($image = $request->file('logo')) {
-                $destinationPath = 'storage/teknologi/';
-                $profileImage = date('YmdHis') . "." . $image->getClientOriginalExtension();
-                $image->move($destinationPath, $profileImage);
-                $input['logo'] = "$profileImage";
+            if ($request->hasFile('logo')) {
+                try {
+                    $image = $request->file('logo');
+                    $result = \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::upload($image->getRealPath(), [
+                        'folder' => 'teknologi',
+                    ]);
+                    $input['logo'] = $result->getSecurePath();
+                } catch (\Exception $e) {
+                    \Log::error('Cloudinary Upload Failed: ' . $e->getMessage());
+                    return redirect()->back()->withErrors(['logo' => 'Upload failed. Please check logs.']);
+                }
             }
 
             Teknologi::create($input);
@@ -101,19 +110,17 @@ class TeknologiController extends Controller
 
             $input = $request->all();
 
-            if ($image = $request->file('logo')) {
-                // Hapus logo lama
-                if ($teknologi->logo) {
-                    $oldPath = public_path('storage/teknologi/' . $teknologi->logo);
-                    if (file_exists($oldPath)) {
-                        unlink($oldPath);
-                    }
+            if ($request->hasFile('logo')) {
+                try {
+                    $image = $request->file('logo');
+                    $result = \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::upload($image->getRealPath(), [
+                        'folder' => 'teknologi',
+                    ]);
+                    $input['logo'] = $result->getSecurePath();
+                } catch (\Exception $e) {
+                    \Log::error('Cloudinary Upload Failed (Edit): ' . $e->getMessage());
+                    return redirect()->back()->withErrors(['logo' => 'Upload failed. Please check logs.']);
                 }
-
-                $destinationPath = 'storage/teknologi/';
-                $profileImage = date('YmdHis') . "." . $image->getClientOriginalExtension();
-                $image->move($destinationPath, $profileImage);
-                $input['logo'] = "$profileImage";
             } else {
                 unset($input['logo']);
             }
@@ -127,12 +134,7 @@ class TeknologiController extends Controller
     public function hapusTeknologi($id)
     {
         $teknologi = Teknologi::find($id);
-        if ($teknologi->logo) {
-            $oldPath = public_path('storage/teknologi/' . $teknologi->logo);
-            if (file_exists($oldPath)) {
-                unlink($oldPath);
-            }
-        }
+        // Cloudinary deletion skipped for now
         $teknologi->delete();
         return response()->json(['msg' => 'Data Teknologi berhasil dihapus']);
     }

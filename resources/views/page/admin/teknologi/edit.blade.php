@@ -52,8 +52,8 @@
                                 </div>
                                 @if($teknologi->logo)
                                     <div class="mt-2 text-center">
-                                        <img src="{{ asset('storage/teknologi/' . $teknologi->logo) }}" width="150px"
-                                            class="img-thumbnail">
+                                        <img src="{{ filter_var($teknologi->logo, FILTER_VALIDATE_URL) ? $teknologi->logo : asset('storage/teknologi/' . $teknologi->logo) }}"
+                                            width="150px" class="img-thumbnail">
                                     </div>
                                 @endif
                             </div>

@@ -89,9 +89,16 @@ class PortofolioController extends Controller
             $input = $request->all();
 
             if ($request->hasFile('image')) {
-                $image = $request->file('image');
-                $cloudinaryImage = $image->storeOnCloudinary('portofolio');
-                $input['image'] = $cloudinaryImage->getSecurePath();
+                try {
+                    $image = $request->file('image');
+                    $result = \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::upload($image->getRealPath(), [
+                        'folder' => 'portofolio',
+                    ]);
+                    $input['image'] = $result->getSecurePath();
+                } catch (\Exception $e) {
+                    \Log::error('Cloudinary Upload Failed: ' . $e->getMessage());
+                    return redirect()->back()->withErrors(['image' => 'Upload failed. Please check logs.']);
+                }
             }
 
             Portofolio::create($input);
@@ -118,9 +125,16 @@ class PortofolioController extends Controller
                 // For Cloudinary, we might want to delete by public ID, but secure URL doesn't directly map to it simply.
                 // For now, simpler to just upload the new one.
 
-                $image = $request->file('image');
-                $cloudinaryImage = $image->storeOnCloudinary('portofolio');
-                $input['image'] = $cloudinaryImage->getSecurePath();
+                try {
+                    $image = $request->file('image');
+                    $result = \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::upload($image->getRealPath(), [
+                        'folder' => 'portofolio',
+                    ]);
+                    $input['image'] = $result->getSecurePath();
+                } catch (\Exception $e) {
+                    \Log::error('Cloudinary Upload Failed (Edit): ' . $e->getMessage());
+                    return redirect()->back()->withErrors(['image' => 'Upload failed. Please check logs.']);
+                }
             } else {
                 unset($input['image']);
             }

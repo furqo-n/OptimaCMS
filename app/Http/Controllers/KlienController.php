@@ -45,9 +45,12 @@ class KlienController extends Controller
             foreach ($posts as $post) {
                 $edit = route('klien.edit', $post->id);
 
+                // Check if image is a full URL (Cloudinary) or local path
+                $logoUrl = filter_var($post->logo, FILTER_VALIDATE_URL) ? $post->logo : asset('storage/klien/' . $post->logo);
+
                 $nestedData['nama'] = $post->nama;
                 $nestedData['kategori'] = $post->kategori;
-                $nestedData['logo'] = '<img src="' . asset('storage/klien/' . $post->logo) . '" width="100px">';
+                $nestedData['logo'] = '<img src="' . $logoUrl . '" width="100px">';
                 $nestedData['options'] = "&emsp;<a href='{$edit}' title='EDIT' class='btn btn-warning btn-sm'><i class='fas fa-edit'></i></a>
                                           &emsp;<a href='javascript:void(0)' data-id='{$post->id}' data-url='" . route('klien.delete', $post->id) . "' title='DELETE' class='btn btn-danger btn-sm hapusData'><i class='fas fa-trash'></i></a>";
                 $data[] = $nestedData;
@@ -75,11 +78,17 @@ class KlienController extends Controller
 
             $input = $request->all();
 
-            if ($image = $request->file('logo')) {
-                $destinationPath = 'storage/klien/';
-                $profileImage = date('YmdHis') . "." . $image->getClientOriginalExtension();
-                $image->move($destinationPath, $profileImage);
-                $input['logo'] = "$profileImage";
+            if ($request->hasFile('logo')) {
+                try {
+                    $image = $request->file('logo');
+                    $result = \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::upload($image->getRealPath(), [
+                        'folder' => 'klien',
+                    ]);
+                    $input['logo'] = $result->getSecurePath();
+                } catch (\Exception $e) {
+                    \Log::error('Cloudinary Upload Failed: ' . $e->getMessage());
+                    return redirect()->back()->withErrors(['logo' => 'Upload failed. Please check logs.']);
+                }
             }
 
             Klien::create($input);
@@ -101,19 +110,17 @@ class KlienController extends Controller
 
             $input = $request->all();
 
-            if ($image = $request->file('logo')) {
-                // Hapus logo lama
-                if ($klien->logo) {
-                    $oldPath = public_path('storage/klien/' . $klien->logo);
-                    if (file_exists($oldPath)) {
-                        unlink($oldPath);
-                    }
+            if ($request->hasFile('logo')) {
+                try {
+                    $image = $request->file('logo');
+                    $result = \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::upload($image->getRealPath(), [
+                        'folder' => 'klien',
+                    ]);
+                    $input['logo'] = $result->getSecurePath();
+                } catch (\Exception $e) {
+                    \Log::error('Cloudinary Upload Failed (Edit): ' . $e->getMessage());
+                    return redirect()->back()->withErrors(['logo' => 'Upload failed. Please check logs.']);
                 }
-
-                $destinationPath = 'storage/klien/';
-                $profileImage = date('YmdHis') . "." . $image->getClientOriginalExtension();
-                $image->move($destinationPath, $profileImage);
-                $input['logo'] = "$profileImage";
             } else {
                 unset($input['logo']);
             }
@@ -127,12 +134,7 @@ class KlienController extends Controller
     public function hapusKlien($id)
     {
         $klien = Klien::find($id);
-        if ($klien->logo) {
-            $oldPath = public_path('storage/klien/' . $klien->logo);
-            if (file_exists($oldPath)) {
-                unlink($oldPath);
-            }
-        }
+        // Cloudinary deletion skipped for now
         $klien->delete();
         return response()->json(['msg' => 'Data Klien berhasil dihapus']);
     }

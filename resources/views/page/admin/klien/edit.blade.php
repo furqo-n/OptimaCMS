@@ -53,8 +53,8 @@
                                 </div>
                                 @if($klien->logo)
                                     <div class="mt-2 text-center">
-                                        <img src="{{ asset('storage/klien/' . $klien->logo) }}" width="150px"
-                                            class="img-thumbnail">
+                                        <img src="{{ filter_var($klien->logo, FILTER_VALIDATE_URL) ? $klien->logo : asset('storage/klien/' . $klien->logo) }}"
+                                            width="150px" class="img-thumbnail">
                                     </div>
                                 @endif
                             </div>
